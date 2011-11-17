@@ -1,0 +1,6 @@
+﻿name: rest-aurant
+depends: openwrap anchored content
+depends: openrasta-devtools
+depends: openrasta-hosting-aspnet = 2.1
+depends: openrasta-contentlocation
+depends: openrasta-codecs-sharpview

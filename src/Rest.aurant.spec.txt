@@ -1,0 +1,25 @@
+1. Discovering entrypoints
+
+We could have used:
+ - Fixed URI (/restaurants)
+   - robots.txt
+      "has a list of restaurants at /restaurants"
+ - Homepage with links
+   - service document in AtomPub
+      "has an atompub service doc at /services, find collection with name restaurants
+   - html page
+      "has to be html, have an <a> element with rel="restaurants"
+
+To discover the various entrypoints into the application, an agent 
+MAY send a request to any resource URI on a target server and read 
+the link headers[1] that MUST be present on the response.
+
+The rest-aurant specification provides the following link relationships
+that can be discovered.
+|| Title               | Rel value                              ||
+ | List of restaurants | http://rest.aurant.org/restaurant-list |
+
+2. List of restaurants
+
+References
+[1] WebLinking http://tools.ietf.org/html/rfc5988
