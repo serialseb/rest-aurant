@@ -26,11 +26,11 @@
         <legend>New reservation</legend>
         <label>
             name:
-            <%= Xhtml.TextBox<Booking>(_=>_.Name) %>
+            <%= Xhtml.TextBox<Booking>(_=>_.Name).Name("name") %>
         </label>
-        <%= label
+        <%--<%= label
                 ["covers: "]
-                [Xhtml.TextBox<Booking>(_=>_.Covers)] %>
+                [Xhtml.TextBox<Booking>(_=>_.NumberOfCovers).Name("numberOfCovers")] %>--%>
         <input type="submit" value="Reserve!" />
     </fieldset>
     <%} %>

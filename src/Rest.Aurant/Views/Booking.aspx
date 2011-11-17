@@ -20,7 +20,7 @@ Inherits="OpenRasta.Codecs.WebForms.ResourceView<Rest.Aurant.Booking>" %>
         <dd><%= Resource.Name %></dd>
         
         <dt>Covers</dt>
-        <dd><%= Resource.Covers %></dd>
+        <dd><%= Resource.NumberOfCovers %></dd>
     </dl>
 </body>
 </html>

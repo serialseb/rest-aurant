@@ -19,7 +19,7 @@ Inherits="OpenRasta.Codecs.WebForms.ResourceView<System.Collections.Generic.IEnu
                 </label>
         <%= label
                 ["covers: "]
-                [Xhtml.TextBox<Booking>(_=>_.Covers)] %>
+                [Xhtml.TextBox<Booking>(_=>_.NumberOfCovers)] %>
         <input type="submit" value="Reserve!" />
     </fieldset>
     <%} %>

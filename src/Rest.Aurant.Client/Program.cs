@@ -22,24 +22,31 @@ namespace Rest.Aurant.Client
             Console.WriteLine("Using " + selectedRestaurant);
 
             var restaurant = DisplayRestaurant(selectedRestaurant);
-            var name = ReadData("Name: ");
-            string numberOfCovers = ReadData("Number of covers");
-            BookTable(restaurant, name, int.Parse(numberOfCovers));
+            var userInput = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                                 {
+                                     {"name", ReadData("Name: ")},
+                                     {"numberOfcovers", ReadData("Name: ")}
+                                 };
+            BookTable(restaurant, userInput);
 
         }
 
-        private static void BookTable(XDocument restaurant, string name, int numberOfcovers)
+        private static void BookTable(XDocument restaurant, IDictionary<string,string> userInput)
         {
             var form = restaurant.Document.HDescendants("form")
                                           .Where(_ => _.HAttr("name") == "http://rest.aurant.org/table-booker")
                                           .First();
+            var content = from input in form.HDescendants("input")
+                          let name = input.HAttr("name")
+                          where name != null
+                          select string.Format("{0}={1}", name, userInput[name]);
+
             var destinationHref = form.HAttr("action");
-            var content = string.Format("Name={0}&Covers={1}", name, numberOfcovers);
 
             var destinationUri = destinationHref ?? restaurant.BaseUri;
             var request = GetDefaultPostRequest(destinationUri);
             using (var writer = new StreamWriter(request.GetRequestStream(), Encoding.UTF8))
-                writer.Write(content);
+                writer.Write(string.Join("&", content));
             var response = (HttpWebResponse)request.GetResponse();
             if (response.StatusCode == HttpStatusCode.Created)
                 Console.WriteLine("Yay you're in!");
@@ -66,10 +73,10 @@ namespace Rest.Aurant.Client
                 .ItemScope("Restaurant")
                 .First();
             restaurant.WriteConsole();
-            if (restaurant["acceptsReservations"] == "True")
+            if (restaurant["acceptsReservations"] == "Yes")
                 Console.WriteLine("Press enter to book a table");
             else
-                Console.WriteLine("The restaurant does not take bookings");
+                throw new InvalidOperationException("The restaurant does not take bookings");
 
             return restaurantDocument;
         }
