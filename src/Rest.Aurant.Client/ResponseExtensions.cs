@@ -29,7 +29,8 @@ static internal class ResponseExtensions
                where node.HAttr("itemscope") == "itemscope"
                select (from property in node.Descendants()
                        let propName = property.HAttr("itemprop")
-                       where propertyNames.Contains(propName)
+                       where propName != null &&
+                             (!propertyNames.Any() || propertyNames.Contains(propName))
                        select  property).ToDictionary(_=>_.HAttr("itemprop"), _=>_.Value);
     }
 }

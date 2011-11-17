@@ -109,6 +109,10 @@ namespace Rest.Aurant
         {
             return Database.Restaurants;
         }
+        public object Get(string identifier)
+        {
+            return Database.Restaurants.First(_ => _.Identifier == identifier);
+        }
     }
 
     public class Restaurant
@@ -118,6 +122,8 @@ namespace Rest.Aurant
         public string Address { get; set; }
 
         public string Identifier { get; set; }
+
+        public bool AcceptsReservations { get; set; }
     }
 
     public class BookingsHandler

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using OpenRasta;
 
 namespace Rest.Aurant.Client
 {
@@ -14,16 +14,32 @@ namespace Rest.Aurant.Client
         private const string REL_RESTAURANT_LIST = "http://rest.aurant.org/restaurant-list";
         static void Main(string[] args)
         {
-            var restaurantHref = DiscoverRestaurantListUri();
-            Console.WriteLine("Using " + restaurantHref);
+            var restaurantListUri = DiscoverRestaurantListUri();
+            Console.WriteLine("Using " + restaurantListUri);
 
-            var selectedRestaurant = SelectRestaurantUri(restaurantHref);
+            var selectedRestaurant = SelectRestaurantUri(restaurantListUri);
             Console.WriteLine("Using " + selectedRestaurant);
+
+            DisplayRestaurant(selectedRestaurant);
+
         }
 
-        private static Uri SelectRestaurantUri(Uri restaurantHref)
+        private static void DisplayRestaurant(Uri selectedRestaurant)
         {
-            var document = XDocument.Load(restaurantHref.ToString())
+            var restaurant = XDocument.Load(selectedRestaurant.ToString())
+                .ItemScope("Restaurant")
+                .First();
+            restaurant.WriteConsole();
+            if (restaurant["acceptsReservations"] == "True")
+                Console.WriteLine("Press enter to book a table");
+            else
+                Console.WriteLine("The restaurant does not take bookings");
+            Console.ReadLine();
+        }
+
+        private static Uri SelectRestaurantUri(Uri restaurantListUri)
+        {
+            var document = XDocument.Load(restaurantListUri.ToString())
                                     .ItemScope("http://schema.org/Restaurant", "name", "address", "url")
                                     .ToList();
 
@@ -40,7 +56,8 @@ namespace Rest.Aurant.Client
         {
             const string defaultHref = "http://localhost:40372";
             Console.Write("Enter server (default {0}):", defaultHref);
-            var inputUri = Console.ReadLine() ?? defaultHref;
+            var inputUri = Console.ReadLine();
+            inputUri = string.IsNullOrEmpty(inputUri) ? defaultHref : inputUri;
 
             var req = WebRequest.Create(inputUri);
             var response = req.GetResponse();

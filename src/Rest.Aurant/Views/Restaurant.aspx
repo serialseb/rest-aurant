@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" Inherits="OpenRasta.Codecs.WebForms.ResourceView<System.Collections.Generic.IEnumerable<Rest.Aurant.Restaurant>>" %>
+﻿<%@ Page Language="C#" Inherits="OpenRasta.Codecs.WebForms.ResourceView<Rest.Aurant.Restaurant>" %>
 
 <%@ Import Namespace="OpenRasta.Web.Markup" %>
 <%@ Import Namespace="Rest.Aurant" %>
@@ -8,7 +8,14 @@
     <title></title>
 </head>
 <body>
-    <%--<h1><%= Resource. %></h1>--%>
+    <dl itemscope="itemscope" itemtype="http://schema.org/Restaurant">
+        <dt>Name:</dt>
+        <dd itemprop="name"><%= Resource.Name %></dd>
+        <dt>Address:</dt>
+        <dd itemprop="address"><%= Resource.Address %></dd>
+        <dt>Takes bookings:</dt>
+        <dd itemprop="acceptsReservations"><%= Resource.AcceptsReservations ? "Yes" : "No"%></dd>
+    </dl>
     <% using (scope(Xhtml.Form(Resource).Method("POST"))) { %>
     <fieldset>
         <legend>New reservation</legend>
