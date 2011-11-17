@@ -12,44 +12,70 @@ namespace Rest.Aurant.Client
 {
     class Program
     {
-        private const string REL_RESTAURANT_LIST = "http://rest.aurant.org/restaurant-list";
         static void Main(string[] args)
         {
             var restaurantListUri = DiscoverRestaurantListUri();
             Console.WriteLine("Using " + restaurantListUri);
+            var userInput = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                                 {
+                                     {"name", ReadData("Name: ")},
+                                     {"numberOfcovers", ReadData("Covers: ")},
+                                     {"longnumber", ReadData("Credit Card: ")}
+                                 };
+
 
             var selectedRestaurant = SelectRestaurantUri(restaurantListUri);
             Console.WriteLine("Using " + selectedRestaurant);
 
             var restaurant = DisplayRestaurant(selectedRestaurant);
-            var userInput = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                                 {
-                                     {"name", ReadData("Name: ")},
-                                     {"numberOfcovers", ReadData("Name: ")}
-                                 };
+
+
             BookTable(restaurant, userInput);
 
         }
-
         private static void BookTable(XDocument restaurant, IDictionary<string,string> userInput)
         {
-            var form = restaurant.Document.HDescendants("form")
-                                          .Where(_ => _.HAttr("name") == "http://rest.aurant.org/table-booker")
-                                          .First();
-            var content = from input in form.HDescendants("input")
-                          let name = input.HAttr("name")
-                          where name != null
-                          select string.Format("{0}={1}", name, userInput[name]);
+            var baseUri = restaurant.BaseUri;
+
+            var response = ProcessForm(restaurant, userInput, baseUri);
+                if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300)
+                    Console.WriteLine("Booking made!");
+        }
+
+        private static HttpWebResponse ProcessForm(XDocument restaurant, IDictionary<string, string> userInput, string baseUri)
+        {
+            Console.WriteLine("Do you want to cancel? (y/n)");
+            if (Console.ReadLine() == "y")
+                throw new NotImplementedException();
+            var document = restaurant.Document;
+            var form = document.HDescendants("form").First();
+
+            var request = CompleteForm(userInput, baseUri, form);
+            var response = (HttpWebResponse) request.GetResponse();
+            var responseDoc = XDocument.Load(response.GetResponseStream());
+
+            return responseDoc != null && 
+                   responseDoc.HDescendants("form").Any() 
+                   ? ProcessForm(responseDoc, userInput, baseUri) 
+                   : response;
+        }
+
+        private static WebRequest CompleteForm(IDictionary<string, string> userInput, string baseUri, XElement form)
+        {
+            var content = string.Join("&", from input in form.HDescendants("input")
+                                           let name = input.HAttr("name")
+                                           where name != null
+                                           let isHidden = input.HAttr("type") == "hidden"
+                                           let value = isHidden ? input.HAttr("value") : userInput[name]
+                                           select string.Format("{0}={1}", name, value));
 
             var destinationHref = form.HAttr("action");
 
-            var destinationUri = destinationHref ?? restaurant.BaseUri;
+            var destinationUri = destinationHref ?? baseUri;
             var request = GetDefaultPostRequest(destinationUri);
             using (var writer = new StreamWriter(request.GetRequestStream(), Encoding.UTF8))
-                writer.Write(string.Join("&", content));
-            var response = (HttpWebResponse)request.GetResponse();
-            if (response.StatusCode == HttpStatusCode.Created)
-                Console.WriteLine("Yay you're in!");
+                writer.Write(content);
+            return request;
         }
 
         private static WebRequest GetDefaultPostRequest(string destinationUri)
@@ -105,7 +131,7 @@ namespace Rest.Aurant.Client
 
             var req = WebRequest.Create(inputUri);
             var response = req.GetResponse();
-            var linkHeader = response.GetLinkValue(REL_RESTAURANT_LIST);
+            var linkHeader = response.GetLinkValue(Microdata.REL_RESTAURANT_LIST);
             var baseUri = new Uri(inputUri, UriKind.Absolute);
             var linkUri = new Uri(linkHeader, UriKind.RelativeOrAbsolute);
             return new Uri(baseUri, linkUri);

@@ -54,6 +54,7 @@
   <ItemGroup>
     <Content Include="Views\Bookings.aspx" />
     <Content Include="Views\Booking.aspx" />
+    <Content Include="Views\CreditCard.aspx" />
     <Content Include="Views\Restaurant.aspx" />
     <Content Include="Views\Restaurants.aspx" />
     <Content Include="Views\IndexPage.aspx" />
@@ -68,6 +69,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Rest.Aurant.Client\Microdata.cs">
+      <Link>Microdata.cs</Link>
+    </Compile>
     <Compile Include="Configuration.cs" />
     <Compile Include="Resources\Home.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

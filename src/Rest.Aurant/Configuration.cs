@@ -61,12 +61,31 @@ namespace Rest.Aurant
                     .HandledBy<BookingsHandler>()
                     .RenderedByAspx("~/Views/Bookings.aspx");
 
+                ResourceSpace.Has
+                    .ResourcesOfType<CreditCardVerification>()
+                    .AtUri("/restaurants/bookings/{bookingid}/cc")
+                    .HandledBy<CCHandler>()
+                    .RenderedByAspx("~/Views/CreditCard.aspx");
+
 
                 ResourceSpace.Has
                     .ResourcesOfType<MetaRedirect>()
                     .WithoutUri
                     .TranscodedBy<MetaRedirect>();
             }
+        }
+    }
+
+    public class CCHandler
+    {
+        public object Post(CreditCardVerification verif)
+        {
+            var booking = Database.Bookings.ElementAt(verif.BookingId);
+            booking.Confirmed = true;
+            return new OperationResult.SeeOther
+                       {
+                           RedirectLocation = booking.CreateUri()
+                       };
         }
     }
 
@@ -100,6 +119,7 @@ namespace Rest.Aurant
                                           AcceptsReservations = true
                                       }
                               };
+            Bookings = new List<Booking>();
         }
         public static ICollection<Restaurant> Restaurants { get; set; }
         public static ICollection<Booking> Bookings { get; set; }
@@ -130,29 +150,37 @@ namespace Rest.Aurant
 
     public class BookingsHandler
     {
-        private static readonly ICollection<Booking> _bookings
-            = new List<Booking>();
         public object Get(int id)
         {
-            return _bookings.ElementAt(id);
+            return Database.Bookings.ElementAt(id);
         }
         public object Post(Booking booking)
         {
-            booking.Id = _bookings.Count;
-            _bookings.Add(booking);
+            booking.Id = Database.Bookings.Count;
+            Database.Bookings.Add(booking);
 
             var redirectLocation = booking.CreateUri();
             return new OperationResult.Created
                        {
                            RedirectLocation = redirectLocation,
-                           ResponseResource = new MetaRedirect(redirectLocation)
+                           ResponseResource = new CreditCardVerification
+                                                  {
+                                                      BookingId = booking.Id
+                                                  }
                        };
         }
         public object Get()
         {
-            return _bookings;
+            return Database.Bookings;
         }
     }
+
+    public class CreditCardVerification
+    {
+        public string LongNumber { get; set; }
+        public int BookingId { get; set; }
+    }
+
     [MediaType("text/html")]
     public class MetaRedirect : IMediaTypeWriter
     {
@@ -187,6 +215,7 @@ namespace Rest.Aurant
         public int Id { get; set; }
         public string Name { get; set; }
         public int NumberOfCovers { get; set; }
+        public bool Confirmed { get; set; }
         public string RestaurantIdentifier { get; set; }
     }
 
