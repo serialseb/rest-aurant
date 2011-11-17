@@ -1,5 +1,6 @@
 ﻿<%@ Page Language="C#" Inherits="OpenRasta.Codecs.WebForms.ResourceView<Rest.Aurant.Restaurant>" %>
 
+<%@ Import Namespace="OpenRasta.Web" %>
 <%@ Import Namespace="OpenRasta.Web.Markup" %>
 <%@ Import Namespace="Rest.Aurant" %>
 
@@ -16,7 +17,11 @@
         <dt>Takes bookings:</dt>
         <dd itemprop="acceptsReservations"><%= Resource.AcceptsReservations ? "Yes" : "No"%></dd>
     </dl>
-    <% using (scope(Xhtml.Form(Resource).Method("POST"))) { %>
+    <% using (scope(Xhtml
+           .Form(Resource)
+           .Action(typeof(IEnumerable<Booking>).CreateUri(new { restaurantidentifier = Resource.Identifier}))
+           .Method("POST").Attr("name", "http://rest.aurant.org/table-booker")))
+       { %>
     <fieldset>
         <legend>New reservation</legend>
         <label>

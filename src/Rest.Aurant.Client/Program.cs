@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -20,13 +21,48 @@ namespace Rest.Aurant.Client
             var selectedRestaurant = SelectRestaurantUri(restaurantListUri);
             Console.WriteLine("Using " + selectedRestaurant);
 
-            DisplayRestaurant(selectedRestaurant);
+            var restaurant = DisplayRestaurant(selectedRestaurant);
+            var name = ReadData("Name: ");
+            string numberOfCovers = ReadData("Number of covers");
+            BookTable(restaurant, name, int.Parse(numberOfCovers));
 
         }
 
-        private static void DisplayRestaurant(Uri selectedRestaurant)
+        private static void BookTable(XDocument restaurant, string name, int numberOfcovers)
         {
-            var restaurant = XDocument.Load(selectedRestaurant.ToString())
+            var form = restaurant.Document.HDescendants("form")
+                                          .Where(_ => _.HAttr("name") == "http://rest.aurant.org/table-booker")
+                                          .First();
+            var destinationHref = form.HAttr("action");
+            var content = string.Format("Name={0}&Covers={1}", name, numberOfcovers);
+
+            var destinationUri = destinationHref ?? restaurant.BaseUri;
+            var request = GetDefaultPostRequest(destinationUri);
+            using (var writer = new StreamWriter(request.GetRequestStream(), Encoding.UTF8))
+                writer.Write(content);
+            var response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.Created)
+                Console.WriteLine("Yay you're in!");
+        }
+
+        private static WebRequest GetDefaultPostRequest(string destinationUri)
+        {
+            var request = WebRequest.Create(destinationUri);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            return request;
+        }
+
+        private static string ReadData(string requestText)
+        {
+            Console.Write(requestText);
+            return Console.ReadLine();
+        }
+
+        private static XDocument DisplayRestaurant(Uri selectedRestaurant)
+        {
+            var restaurantDocument = XDocument.Load(selectedRestaurant.ToString(), LoadOptions.SetBaseUri);
+            var restaurant = restaurantDocument
                 .ItemScope("Restaurant")
                 .First();
             restaurant.WriteConsole();
@@ -34,13 +70,14 @@ namespace Rest.Aurant.Client
                 Console.WriteLine("Press enter to book a table");
             else
                 Console.WriteLine("The restaurant does not take bookings");
-            Console.ReadLine();
+
+            return restaurantDocument;
         }
 
         private static Uri SelectRestaurantUri(Uri restaurantListUri)
         {
             var document = XDocument.Load(restaurantListUri.ToString())
-                                    .ItemScope("http://schema.org/Restaurant", "name", "address", "url")
+                                    .ItemScope("http://schema.org/Restaurant")
                                     .ToList();
 
             foreach (var restaurant in document)
@@ -74,6 +111,10 @@ namespace Rest.Aurant.Client
         {
             var attrib = element.Attribute(attribName);//XName.Get(attribName, XHTML_NS));
             return attrib != null ? attrib.Value : null;
+        }
+        public static IEnumerable<XElement> HDescendants(this XContainer element, string elementName)
+        {
+            return element.Descendants(XName.Get(elementName, XHTML_NS));
         }
         public static void WriteConsole(this IDictionary<string,string> dic)
         {

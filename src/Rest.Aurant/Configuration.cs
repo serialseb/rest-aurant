@@ -50,16 +50,17 @@ namespace Rest.Aurant
                     .RenderedByAspx("~/Views/Restaurant.aspx");
 
                 ResourceSpace.Has
+                    .ResourcesOfType<Booking>()
+                    .AtUri("/restaurants/bookings/{id}")
+                    .HandledBy<BookingsHandler>()
+                    .RenderedByAspx("~/Views/Booking.aspx");
+
+                ResourceSpace.Has
                     .ResourcesOfType<IEnumerable<Booking>>()
-                    .AtUri("/bookings")
+                    .AtUri("/restaurants/{restaurantidentifier}/bookings")
                     .HandledBy<BookingsHandler>()
                     .RenderedByAspx("~/Views/Bookings.aspx");
 
-                ResourceSpace.Has
-                    .ResourcesOfType<Booking>()
-                    .AtUri("/bookings/{id}")
-                    .HandledBy<BookingsHandler>()
-                    .RenderedByAspx("~/Views/Booking.aspx");
 
                 ResourceSpace.Has
                     .ResourcesOfType<MetaRedirect>()
@@ -95,7 +96,8 @@ namespace Rest.Aurant
                                       {
                                           Name = "Wahaca",
                                           Address = "Soho",
-                                          Identifier = "soho_wahaca"
+                                          Identifier = "soho_wahaca",
+                                          AcceptsReservations = true
                                       }
                               };
         }
@@ -185,6 +187,7 @@ namespace Rest.Aurant
         public int Id { get; set; }
         public string Name { get; set; }
         public int Covers { get; set; }
+        public string RestaurantIdentifier { get; set; }
     }
 
     public class IndexPageHandler
